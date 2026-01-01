@@ -1,0 +1,19 @@
+notas
+
+//instalar el generador de claves VAPID
+npm install web-push -g
+
+//generar claves vapid
+web-push generate-vapid-keys --json
+
+{
+    "publicKey":"BFJKEncYEf0TiWXk_kPMhfrAPajhWJcx-W4ZzlXH3Do-_JvxGVQKv9Gi2elyn7bd4Kf-NSgNtle2T81khTy7Ndw",
+    "privateKey":"pOUJT2Ht_YUFHXjmUCcXSz5ybHoXsPlEkCFKuXC-p5s"
+}
+
+//instalar openssl usando la opcion instalar binarios en /bin7
+"https://slproweb.com/products/Win32OpenSSL.html"
+
+definir variables de entorno
+OPENSSL_DIR    = C:\Program Files\OpenSSL-Win64
+OPENSSL_LIB_DIR= C:\Program Files\OpenSSL-Win64\lib\VC\x64\MD
