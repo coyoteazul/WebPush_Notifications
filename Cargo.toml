@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 axum               = { version = "0.8.8"  , default-features = false, features = ["json", "macros", "http1", "http2", "tracing", "tokio"] }
 serde_json         = { version = "1.0"    , default-features = false }
-web-push           = { version = "0.11.0" , default-features = false, features = ["isahc-client"] }
+web-push           = { version = "0.11.0" , default-features = false, features = ["hyper-client"] }
 tokio              = { version = "1.48.0" , default-features = false, features = ["macros", "rt-multi-thread", "net"] }
 serde              = { version = "1.0.228", default-features = false }
 log                = { version = "0.4.29" , default-features = false }
@@ -14,6 +14,5 @@ tracing            = { version = "0.1.44" , default-features = false }
 tracing-subscriber = { version = "0.3.22" , default-features = false, features = ["fmt"] }
 utoipa-axum        = { version = "0.2.0"  , default-features = false }
 utoipa             = { version = "5.4.0"  , default-features = false, features = ["axum_extras"] }
-isahc              = { version = "1.7.2"  , default-features = false}
 openssl            = { version = "0.10.75", default-features = false, features = ["vendored"] }
 chrono             = { version = "0.4.42" , default-features = false }

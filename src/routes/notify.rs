@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::info;
 use utoipa::ToSchema;
-use web_push::{ContentEncoding, IsahcWebPushClient, SubscriptionInfo, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder};
+use web_push::{ContentEncoding, HyperWebPushClient, SubscriptionInfo, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder};
 
 use crate::conf::KeysJson;
 
@@ -99,7 +99,7 @@ pub async fn notify(
     Json(mut req): Json<NotificationRequest>,
 ) -> NotifyResponses {
     // Build subscription info
-    dbg!(&req);
+    info!("req: {:?}",&req);
     let sub = SubscriptionInfo::new(
         req.subscription.endpoint,
         req.subscription.keys.p256dh,
@@ -134,13 +134,7 @@ pub async fn notify(
     builder.set_vapid_signature(sig);
 
     // Create client and send
-    let client = match IsahcWebPushClient::new() {
-        Ok(c) => c,
-        Err(e) => {
-            log::error!("Failed to create WebPushClient: {}", e);
-            return NotifyResponses::InternalServerError("WebPush client error".into());
-        }
-    };
+    let client = HyperWebPushClient::new();
 
     match client.send(builder.build().unwrap()).await {
         Ok(_) => {
