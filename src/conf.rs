@@ -1,9 +1,12 @@
 use std::fs;
 
-use openssl::{base64, bn::BigNumContext, ec::{EcGroup, EcKey, PointConversionForm}, nid::Nid};
+use base64::Engine;
+use ::base64::prelude;
+use openssl::{bn::BigNumContext, ec::{EcGroup, EcKey, PointConversionForm}, nid::Nid};
 use serde::{Deserialize, Serialize};
 use tracing::level_filters::LevelFilter;
 use utoipa::openapi::Contact;
+
 
 pub fn load_conf_file() -> ConfFile {
     let conf_path = r"conf.json";
@@ -101,24 +104,31 @@ impl Into<LevelFilter> for TraceLevel {
 // New: generate VAPID keypair suitable for web-push (P-256)
 // returns KeysJson with base64 (URL-safe, no padding) encoded public and private key bytes.
 fn generate_vapid_keys() -> Result<KeysJson, Box<dyn std::error::Error>> {
-    // Create P-256 group and generate EC keypair
+    // Generate EC keypair on P-256
     let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
     let ec_key = EcKey::generate(&group)?;
 
-    // Private key as DER (ASN.1 EC PRIVATE KEY)
-    let priv_der = ec_key.private_key_to_der()?;
-
-    // Public key as uncompressed point bytes
+    // ---- PUBLIC KEY (65 bytes: 0x04 || X || Y) ----
     let mut ctx = BigNumContext::new()?;
     let pub_point = ec_key.public_key();
-    let pub_bytes = pub_point.to_bytes(&group, PointConversionForm::UNCOMPRESSED, &mut ctx)?;
+    let pub_bytes = pub_point.to_bytes(
+        &group,
+        PointConversionForm::UNCOMPRESSED,
+        &mut ctx,
+    )?;
 
-    // URL-safe base64 without padding (commonly used for VAPID)
-    let priv_b64 = base64::encode_block(&priv_der);
-    let pub_b64 = base64::encode_block(&pub_bytes);
+    assert_eq!(pub_bytes.len(), 65);
+
+    // ---- PRIVATE KEY (32-byte scalar d) ----
+    let priv_bn = ec_key.private_key();
+    let priv_bytes = priv_bn.to_vec_padded(32)?;
+
+    // ---- Base64URL (no padding) ----
+    let public_key = prelude::BASE64_URL_SAFE_NO_PAD.encode(&pub_bytes);
+    let private_key = prelude::BASE64_URL_SAFE_NO_PAD.encode(&priv_bytes);
 
     Ok(KeysJson {
-        public_key: pub_b64,
-        private_key: priv_b64,
+        public_key,
+        private_key,
     })
 }
