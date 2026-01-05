@@ -65,7 +65,7 @@ struct Notification {
     ///https://developer.mozilla.org/en-US/docs/Web/API/Vibration_API#vibration_patterns
     vibrate            : Option<Vec<u16>>,
     ///https://angular.dev/ecosystem/service-workers/push-notifications
-    /// Si el title es default, no se crea un nuevo boton
+    /// Use 'default' as title to set the default action
     actions            : Option<Vec<Action>>,
 }
 
