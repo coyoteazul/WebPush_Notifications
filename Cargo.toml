@@ -7,7 +7,7 @@ edition = "2024"
 axum               = { version = "0.8.8"  , default-features = false, features = ["json", "macros", "http1", "http2", "tracing", "tokio"] }
 serde_json         = { version = "1.0"    , default-features = false }
 web-push           = { version = "0.11.0" , default-features = false, features = ["hyper-client"] }
-tokio              = { version = "1.48.0" , default-features = false, features = ["macros", "rt-multi-thread", "net"] }
+tokio              = { version = "1.48.0", default-features = false, features = ["macros", "rt-multi-thread", "net", "signal"] }
 serde              = { version = "1.0.228", default-features = false }
 log                = { version = "0.4.29" , default-features = false }
 tracing            = { version = "0.1.44" , default-features = false }
@@ -17,3 +17,8 @@ utoipa             = { version = "5.4.0"  , default-features = false, features =
 openssl            = { version = "0.10.75", default-features = false, features = ["vendored"] }
 chrono             = { version = "0.4.42" , default-features = false }
 base64             = { version = "0.22.1" , default-features = false }
+anyhow = "1.0.100"
+tracing-appender = "0.2.4"
+
+[target.'cfg(windows)'.dependencies]
+windows-service = "0.8.0"

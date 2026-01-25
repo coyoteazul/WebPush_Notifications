@@ -220,7 +220,9 @@ pub async fn notify(
 
     let notif_push: NotifPush = req.payload.notification.into();
     let payload = json!({"notification": notif_push});
-    let payload = dbg!(serde_json::to_string(&payload).unwrap()).into_bytes();
+    let payload = serde_json::to_string(&payload).unwrap();//.into_bytes();
+    tracing::debug!("Payload: {}", payload);
+    let payload = payload.as_bytes();
 
     // Build VAPID signature (set your mailto subject)
     let private_key = &conf.private_key;
@@ -228,12 +230,12 @@ pub async fn notify(
         Ok(b) => match b.build() {
             Ok(s) => s,
             Err(e) => {
-                log::error!("Failed to build VAPID signature: {}", e);
+                tracing::error!("Failed to build VAPID signature: {}", e);
                 return NotifyResponses::InternalServerError("VAPID signature error".into());
             }
         },
         Err(e) => {
-            log::error!("Failed to parse VAPID PEM: {}", e);
+            tracing::error!("Failed to parse VAPID PEM: {}", e);
             return NotifyResponses::InternalServerError("VAPID PEM parse error".into());
         }
     };
@@ -252,7 +254,7 @@ pub async fn notify(
             NotifyResponses::Ok("Push sent successfully".into())
         }
         Err(e) => {
-            log::error!("Failed to send push: {}", e);
+            tracing::error!("Failed to send push: {}", e);
             NotifyResponses::InternalServerError("Failed to send push".into())
         }
     }

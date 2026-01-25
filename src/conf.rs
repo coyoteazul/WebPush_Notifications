@@ -2,27 +2,37 @@ use std::fs;
 
 use base64::Engine;
 use ::base64::prelude;
+use tracing::{debug, trace};
 use openssl::{bn::BigNumContext, ec::{EcGroup, EcKey, PointConversionForm}, nid::Nid};
 use serde::{Deserialize, Serialize};
 use tracing::level_filters::LevelFilter;
 use utoipa::openapi::Contact;
 
-
 pub fn load_conf_file() -> ConfFile {
-    let conf_path = r"conf.json";
-    println!("Searching conf.json");
-    match fs::read(conf_path) {
+    let conf_path = std::env::current_exe().unwrap()
+    .parent()
+    .unwrap()
+    .to_path_buf()
+    .join("conf.json");
+    
+    trace!("Searching for conf.json at {:?}", &conf_path);
+    match fs::read(&conf_path) {
         Ok(b) => {
-            println!("conf.json found");
+            trace!("conf.json found");
             match serde_json::from_slice::<ConfFile>(&b) {
-                Ok(k) => k,
+                Ok(k) => {
+                    init_logging(k.server.trace_level);
+                    
+                    k
+                },
                 Err(e) => {
                     panic!("conf.json couldn't be parsed: {}", e);
                 }
             }
         },
         Err(_) => {
-            println!("conf.json couldn't be found. Creating new file, with newly made VAPID keys");
+            init_logging(TraceLevel::TRACE);
+            debug!("conf.json couldn't be found. Creating {}, with newly made VAPID keys", conf_path.display());
 
             let keys = generate_vapid_keys().unwrap();
 
@@ -42,11 +52,13 @@ pub fn load_conf_file() -> ConfFile {
                 } 
             };
             let parsed = serde_json::to_string(&conf).unwrap();
-            match fs::write(conf_path, parsed) {
+            match fs::write(&conf_path, parsed) {
                 Ok(_) => {
+                    trace!("conf.json created");
                     conf
                 },
                 Err(err) => {
+                    tracing::error!("conf.json couldn't be saved: {}", err);
                     panic!("conf.json couldn't be saved: {}", err);
                 },
             }  
@@ -131,4 +143,37 @@ fn generate_vapid_keys() -> Result<KeysJson, Box<dyn std::error::Error>> {
         public_key,
         private_key,
     })
+}
+
+
+
+
+fn init_logging(level:TraceLevel) {
+    #[cfg(windows)]
+    {
+        let location = std::env::current_exe().unwrap();
+        let base_location = location.parent().unwrap();
+        let file_appender = tracing_appender::rolling::daily(
+            base_location,
+            "webpush.log",
+        );
+
+        let (non_blocking, _guard) =
+            tracing_appender::non_blocking(file_appender);
+
+        tracing_subscriber::fmt()
+            .with_max_level(level)
+            .with_writer(non_blocking)
+            .init();
+
+        // IMPORTANT: keep guard alive
+        std::mem::forget(_guard);
+    }
+
+    #[cfg(not(windows))]
+    {
+        tracing_subscriber::fmt()
+            .with_max_level(level)
+            .init();
+    }
 }
